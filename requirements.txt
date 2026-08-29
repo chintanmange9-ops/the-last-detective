@@ -1,0 +1,7 @@
+# The Last Detective has ZERO third-party runtime dependencies.
+#
+# This file is intentionally left with no package entries. `pip install -r
+# requirements.txt` will install nothing, and the game will still run,
+# because it only ever imports the Python standard library. See
+# STDLIB.md for a full list of the packages this project deliberately
+# avoided and what standard-library code replaced them.
