@@ -9,6 +9,8 @@ The Last Detective - entry point.
     python detective.py --solve 1000         (auto-solve seeds 0..999)
     python detective.py --solve 1000-1100    (auto-solve just that range)
     python detective.py --solve-seed 21321   (auto-solve exactly one seed)
+    python detective.py --solve-seed 21321 --solve-verbose
+                                         (same, and print the revealed solution)
 
 Zero third-party runtime dependencies: standard library only.
 """
@@ -31,18 +33,27 @@ def _run_new_case(seed: int, record: bool = True) -> Engine:
     return Engine(case, state, record=record)
 
 
-def _run_solver_test(start_seed: int, count: int, label: str = "") -> int:
+def _run_solver_test(start_seed: int, count: int, label: str = "",
+                     verbose: bool = False) -> int:
     """Developer command: auto-solve `count` cases with the solver bot,
     starting at `start_seed`, and report any that the bot fails to solve.
-    Proof of playability."""
+    Proof of playability. With verbose=True, also print the revealed
+    solution (killer / motive / weapon / location / time / steps) for
+    every case that was solved."""
     solved = 0
     for seed in range(start_seed, start_seed + count):
         case = generate_case(seed)
-        won, _ = solver.solve(case, seed)
+        won, actions = solver.solve(case, seed)
         if won:
             solved += 1
         else:
             print(f"seed {seed}: NOT SOLVED")
+            continue
+        if verbose:
+            t = case.truth
+            from evidence.models import format_time
+            print(f"seed {seed}: {t.killer} | {t.motive} | {t.weapon} "
+                  f"| {t.location} | {format_time(t.time)} | {len(actions)} steps")
     span = label or f"seeds {start_seed}..{start_seed + count - 1}"
     print(f"\nSolver solved {solved}/{count} cases ({span}).")
     return 0 if solved == count else 1
@@ -99,6 +110,9 @@ def build_parser() -> argparse.ArgumentParser:
                          "report failures. N = seeds 0..N-1, or A-B = just that inclusive range.")
     parser.add_argument("--solve-seed", type=int, default=None, metavar="SEED",
                          help="Developer command: auto-solve exactly one seed with the solver bot.")
+    parser.add_argument("--solve-verbose", action="store_true",
+                         help="With --solve/--solve-seed: print the revealed solution "
+                         "for every solved case.")
     return parser
 
 
@@ -111,10 +125,13 @@ def main(argv=None) -> int:
 
     if args.solve is not None:
         start, count = _parse_solve_spec(args.solve)
-        return _run_solver_test(start, count, label=f"spec {args.solve}")
+        return _run_solver_test(start, count, label=f"spec {args.solve}",
+                                verbose=args.solve_verbose)
 
     if args.solve_seed is not None:
-        return _run_solver_test(args.solve_seed, 1, label=f"single seed {args.solve_seed}")
+        return _run_solver_test(args.solve_seed, 1,
+                                label=f"single seed {args.solve_seed}",
+                                verbose=args.solve_verbose)
 
     if args.replay:
         seed, actions = replay_module.load_replay(args.replay)

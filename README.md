@@ -78,6 +78,8 @@ python detective.py --solve 200        # developer command: auto-solve 200 cases
                                         # generated case is actually solvable)
 python detective.py --solve 2000-2200   # ... or just an inclusive seed range
 python detective.py --solve-seed 21321  # ... or a single specific seed
+python detective.py --solve-seed 21321 --solve-verbose
+                                        # ... and print the revealed solution
 ```
 
 ## Why it feels different every time
