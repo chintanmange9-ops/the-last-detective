@@ -123,7 +123,11 @@ def ask(case, suspect: Suspect, category: str) -> str:
     return f'{suspect.name} looks at you, unsure what you\'re asking.'
 
 
-def _conflicting_evidence_ids(case, suspect: Suspect) -> List[str]:
+def conflicting_evidence_ids(case, suspect: Suspect) -> List[str]:
+    """The presented evidence that actually contradicts this suspect's
+    alibi (non-red-herring items that produced a contradiction). Used both
+    to escalate the confrontation and, on the win screen, to list only the
+    evidence that truly landed against the killer."""
     claim = [suspect.alibi_fact()]
     ids = []
     for eid in suspect.interrogation.evidence_presented:
@@ -151,7 +155,7 @@ def present_evidence(case, suspect: Suspect, evidence: Evidence) -> str:
         return f'{suspect.name} says: "That doesn\'t change anything I told you."'
 
     suspect.interrogation.mood = _mood_escalate(suspect.interrogation.mood)
-    conflicting_ids = _conflicting_evidence_ids(case, suspect)
+    conflicting_ids = conflicting_evidence_ids(case, suspect)
 
     if suspect.is_killer and len(conflicting_ids) >= CONFESSION_THRESHOLD:
         suspect.interrogation.confessed = True

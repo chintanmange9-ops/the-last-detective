@@ -262,7 +262,7 @@ def cmd_accuse(case, state, args) -> Tuple[str, bool]:
             f"Location: {case.truth.location}",
             f"Time: {format_time(case.truth.time)}",
         ]
-        presented = case.suspects[case.truth.killer].interrogation.evidence_presented
+        presented = interrogation.conflicting_evidence_ids(case, case.suspects[case.truth.killer])
         if presented:
             lines.append("Evidence used against them: #" + ", #".join(presented))
     else:

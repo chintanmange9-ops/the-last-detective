@@ -1,5 +1,6 @@
 import unittest
 
+from deduction.contradictions import find_contradictions
 from mystery.generator import generate_case
 from game.state import GameState
 from game import commands, scoring
@@ -102,6 +103,50 @@ class TestHintCommand(unittest.TestCase):
         output, _ = commands.execute(f"accuse {case.truth.killer}", case, state)
         self.assertIn("Rank:", output)
         self.assertIn("Case score:", output)
+
+
+class TestWinScreenEvidenceList(unittest.TestCase):
+    """The win screen must only list evidence that genuinely contradicted
+    the killer's alibi, not every piece of evidence presented."""
+
+    def _killer_evidence_pair(self, case):
+        killer = case.suspects[case.truth.killer]
+        claim = [killer.alibi_fact()]
+        conflicting, irrelevant = None, None
+        for ev in case.evidence.values():
+            if ev.is_red_herring:
+                continue
+            hits = find_contradictions(claim, ev.facts)
+            if hits and conflicting is None:
+                conflicting = ev
+            elif not hits and irrelevant is None:
+                irrelevant = ev
+            if conflicting is not None and irrelevant is not None:
+                break
+        return conflicting, irrelevant
+
+    def test_win_screen_only_lists_contradicting_evidence(self):
+        case = generate_case(48291)
+        state = GameState(seed=48291, current_location=case.truth.location)
+        conflicting, irrelevant = self._killer_evidence_pair(case)
+        if conflicting is None or irrelevant is None:
+            self.fail("case should have both a contradicting and an "
+                      "irrelevant evidence for the killer")
+
+        commands.execute(f"question {case.truth.killer}", case, state)
+        for ev in (conflicting, irrelevant):
+            ev.discovered = True
+            commands.execute(f"present {ev.id}", case, state)
+
+        output, _ = commands.execute(f"accuse {case.truth.killer}", case, state)
+        self.assertIn(f"Evidence used against them: #{conflicting.id}", output)
+        self.assertNotIn(f"#{irrelevant.id}", output)
+
+    def test_win_screen_omits_entry_when_nothing_contradicted(self):
+        case = generate_case(48291)
+        state = GameState(seed=48291, current_location=case.truth.location)
+        output, _ = commands.execute(f"accuse {case.truth.killer}", case, state)
+        self.assertNotIn("Evidence used against them", output)
 
 
 class TestSaveHintsRoundTrip(unittest.TestCase):

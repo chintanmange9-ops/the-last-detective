@@ -18,9 +18,12 @@ The bot is valuable for three things:
 
 Strategy:
 
-- Explore: ``map`, then walk the building one hop at a time (the player
-  can only `inspect` connected rooms), inspecting every location and
-  examining every object in it to discover evidence.
+- Explore: `map`, then sweep the map with a breadth-first search
+  (BFS): from wherever the bot stands it walks the shortest hop path
+  (found with `_path_to`, itself a BFS) to the nearest room it hasn't
+  searched yet, since the player can only `inspect` connected rooms.
+  Every location is inspected and every object examined to discover
+  evidence.
 - Question: `question <name>` + ask every category + `done` per suspect.
 - Confront: `present <evidence id>` for every discovered evidence
   against every suspect. A confession (the killer's own dialogue)
@@ -71,10 +74,12 @@ def _discovered_ids(case) -> set:
 
 
 def _explore(case, state: GameState, actions: List[str]) -> None:
-    """Walk the whole building, inspecting locations and examining objects."""
+    """Walk the whole building, inspecting locations and examining objects.
+    A BFS shortest-path search picks the nearest unsearched room from the
+    current position each turn, and the bot walks that route one adjacent
+    `inspect` at a time - exactly how a player would sweep the map."""
     adjacency = _adjacency(case)
-    graph = case.location_graph
-    names = list(graph.names())
+    names = list(case.location_graph.names())
 
     actions.append("map")
     commands.execute("map", case, state)
@@ -91,7 +96,7 @@ def _explore(case, state: GameState, actions: List[str]) -> None:
 
     search_here(current)
 
-    while len(visited) < len(names):
+    while len(visited) < len(names) and len(_discovered_ids(case)) < len(case.evidence):
         best_target, best_path = None, None
         for name in names:
             if name in visited:
