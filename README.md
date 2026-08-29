@@ -130,7 +130,7 @@ compared against anything except an explicit `accuse` command.
 python -m unittest discover -s tests
 ```
 
-65 tests cover deterministic generation, the validator's consistency
+67 tests cover deterministic generation, the validator's consistency
 checks, the timeline engine, evidence discovery, the contradiction
 engine, natural-language questioning, typo-tolerant commands, save/load
 round-tripping, replay fidelity, correct and incorrect accusations, the
