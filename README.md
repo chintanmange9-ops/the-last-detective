@@ -44,6 +44,7 @@ evidence                List discovered evidence
 notes / note <text>     View or add detective notes
 map                     Show the location graph
 status                  Show case/player status
+hint                    Get a nudge toward undiscovered evidence (costs rank)
 accuse <name>           Accuse a suspect (ends the case)
 save <file>             Save game
 load <file>             Load game
@@ -72,6 +73,9 @@ python detective.py --load save.json   # resume a saved game
 python detective.py --replay run.json  # replay a recorded set of actions
 python detective.py --stress 2000      # developer command: generate 2000
                                         # cases and report any that fail validation
+python detective.py --solve 200        # developer command: auto-solve 200 cases
+                                        # with the bundled solver bot (proves every
+                                        # generated case is actually solvable)
 ```
 
 ## Why it feels different every time
@@ -98,13 +102,14 @@ Every case is generated from an integer seed using `random.Random(seed)`
 the-last-detective/
 ├── main.py                 # thin wrapper around detective.py
 ├── detective.py             # CLI entry point (argparse)
-├── game/                    # game loop, player-visible state, command dispatch
+├── game/                    # game loop, player-visible state, command dispatch, scoring
 ├── mystery/                 # the generator, the hidden Truth Engine, the timeline, the validator
 ├── evidence/                 # Fact/Evidence data models + discovery system
-├── characters/               # suspects, personality traits, interrogation dialogue
+├── characters/               # suspects, personality traits, interrogation dialogue, NLU
 ├── world/                    # location graph + examinable objects
 ├── deduction/                # the contradiction engine
 ├── storage/                  # save/load (JSON) and replay
+├── tools/                    # developer tools (the auto-solver bot)
 ├── ui/                       # ANSI-based terminal rendering
 └── tests/                    # unittest suite
 ```
@@ -123,10 +128,12 @@ compared against anything except an explicit `accuse` command.
 python -m unittest discover -s tests
 ```
 
-34 tests cover deterministic generation, the validator's consistency
-checks (including a 200-case stress pass), the timeline engine, evidence
-discovery, the contradiction engine, save/load round-tripping, replay
-fidelity, and both correct and incorrect accusations.
+65 tests cover deterministic generation, the validator's consistency
+checks, the timeline engine, evidence discovery, the contradiction
+engine, natural-language questioning, typo-tolerant commands, save/load
+round-tripping, replay fidelity, correct and incorrect accusations, the
+rank/hint scoring system - and an auto-solver bot that must win over a
+range of seeds, proving every generated case is actually solvable.
 
 For a much larger stress run (generate thousands of cases and report any
 validation failures), use the built-in developer command instead of the
@@ -134,6 +141,14 @@ test suite:
 
 ```bash
 python detective.py --stress 5000
+```
+
+For a playability proof, auto-solve batches of cases without touching the
+keyboard - the bundled solver bot drives the *real* command surface and
+never reads the hidden truth:
+
+```bash
+python detective.py --solve 1000
 ```
 
 ## Design notes
@@ -158,6 +173,14 @@ python detective.py --stress 5000
   is generated from deterministic templates, selected with a small
   per-question seeded RNG so that dialogue is stable across replays of
   the same seed and action sequence.
+- **Ranked epilogue.** Every closed case is scored on how it was played
+  (evidence found, speed, wrong accusations, hints used, confessions
+  forced) and rewards a detective rank from Apprentice up to "The Last
+  Detective" (`game/scoring.py`).
+- **Provably solvable.** `tools/solver.py` is an auto-solver that plays
+  with the same commands and visibility as a human and wins
+  (`--solve N` runs it across many seeds) - a live guarantee that the
+  generator never produces an unwinnable case.
 
 See `STDLIB.md` for a full list of third-party packages this project
 deliberately avoided and what standard-library code replaced them.

@@ -11,6 +11,7 @@ from typing import Tuple
 
 from evidence import system as evidence_system
 from characters import interrogation, nlu
+from game import scoring
 from ui.formatting import bullet_list
 from ui.terminal import bold, yellow, red, green, dim, cyan
 
@@ -34,6 +35,7 @@ HELP_TEXT = """Available commands:
   note <text>             Add a detective note
   map                     Show the location graph
   status                  Show case/player status
+  hint                    Get a nudge toward undiscovered evidence (costs rank)
   accuse <name>           Accuse a suspect
   save <file>             Save game
   load <file>             Load game
@@ -178,6 +180,23 @@ def cmd_evidence(case, state, args) -> str:
     return "\n".join(lines)
 
 
+def cmd_hint(case, state, args) -> str:
+    """Costly nudge: point at the nearest location hiding undiscovered
+    evidence. Deducts from the end-of-case rank (see game/scoring.py)."""
+    if state.game_over:
+        return dim("The case is already closed.")
+    undiscovered = [ev for ev in case.evidence.values() if not ev.discovered]
+    if not undiscovered:
+        return green("You've found every piece of evidence. Accuse your prime suspect.")
+    # Deterministic, player-friendly hint: the undiscovered location with
+    # the lowest evidence id that you can still reach.
+    target = min(undiscovered, key=lambda ev: int(ev.id))
+    state.hints_used += 1
+    return (yellow(f"You consult your notes: \"There's more to find around the "
+                   f"{target.location}.\"")
+            + dim("\n(A hint like this counts against your final rank.)"))
+
+
 def cmd_notes(case, state, args) -> str:
     if args and args[0].lower() != "add":
         text = " ".join(args)
@@ -253,6 +272,7 @@ def cmd_accuse(case, state, args) -> Tuple[str, bool]:
             f"The real killer was {case.truth.killer}, who used the {case.truth.weapon} "
             f"in the {case.truth.location} at {format_time(case.truth.time)}, over {case.truth.motive}.",
         ]
+    lines.append(dim(scoring.epilogue(case, state, correct)))
     return "\n".join(lines), True
 
 
@@ -262,7 +282,7 @@ CATEGORY_WORDS = {"location", "timeline", "victim", "other", "evidence",
 KNOWN_COMMANDS = {
     "new", "inspect", "examine", "suspects", "question", "present",
     "done", "timeline", "evidence", "notes", "note", "map", "status",
-    "accuse", "save", "load", "help", "quit", "exit",
+    "hint", "accuse", "save", "load", "help", "quit", "exit",
 } | CATEGORY_WORDS
 
 
@@ -333,6 +353,8 @@ def execute(line: str, case, state) -> Tuple[str, bool]:
         return cmd_map(case, state, args), False
     if cmd == "status":
         return cmd_status(case, state, args), False
+    if cmd == "hint":
+        return cmd_hint(case, state, args), False
     if cmd == "accuse":
         return cmd_accuse(case, state, args)
     if cmd == "done":

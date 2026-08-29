@@ -49,6 +49,8 @@ def ask(case, suspect: Suspect, category: str) -> str:
             f"{suspect.name} says: \"That's really the only part of the evening I can account for clearly.\"",
             f"{suspect.name} says: \"Before and after that, I honestly wasn't watching the clock.\"",
             f"{suspect.name} says: \"You'd have to ask someone else what happened outside that window.\"",
+            f"{suspect.name} says: \"I kept to what I know. Everything else is just noise to me.\"",
+            f"{suspect.name} says: \"I wish I could help you pin down the rest, but I can't.\"",
         ]
         return rng.choice(options)
 
@@ -57,6 +59,8 @@ def ask(case, suspect: Suspect, category: str) -> str:
             f'{suspect.name} says: "It\'s a terrible loss. We worked together as {suspect.role}s, but I didn\'t know every detail of their life."',
             f'{suspect.name} says: "I still can\'t believe it happened. We weren\'t especially close."',
             f'{suspect.name} says: "I have nothing but respect for them. I don\'t know who would want to do this."',
+            f'{suspect.name} says: "They were sharp and fair to work with. It\'s a great shame."',
+            f'{suspect.name} says: "I\'d known them long enough to be sorry - not much longer than that."',
         ]
         return rng.choice(options)
 
@@ -69,32 +73,50 @@ def ask(case, suspect: Suspect, category: str) -> str:
             f'{suspect.name} says: "{other}? I saw them around earlier, nothing unusual."',
             f'{suspect.name} says: "I try not to speculate about {other}. That wouldn\'t be fair."',
             f'{suspect.name} says: "Ask {other} yourself. I only know what I saw."',
+            f'{suspect.name} says: "{other} was around, yes. Whether that matters, you\'d have to decide."',
+            f'{suspect.name} says: "I can\'t vouch for {other}. I was busy with my own hours."',
         ]
         return rng.choice(options)
 
     if category == "evidence":
-        return f'{suspect.name} says: "If you have something to show me, go ahead. I\'ll explain whatever I can."'
+        options = [
+            f'{suspect.name} says: "If you have something to show me, go ahead. I\'ll explain whatever I can."',
+            f'{suspect.name} says: "Evidence? Bring it out and let\'s talk about it like grown-ups."',
+            f'{suspect.name} says: "I\'d rather see the proof myself than hear it second-hand."',
+        ]
+        return rng.choice(options)
 
     if category == "motive":
         if suspect.is_killer:
             options = [
                 f'{suspect.name} says: "Motive? I had no reason at all. This is absurd."',
                 f'{suspect.name} says: "I don\'t see why you\'d even ask me that."',
+                f'{suspect.name} says: "Why would I want to harm them? I was loyal."',
+                f'{suspect.name} says: "You\'re looking in the wrong direction. That\'s all I\'ll say."',
             ]
         else:
             options = [
                 f'{suspect.name} says: "I had no reason to want them harmed."',
                 f'{suspect.name} says: "Whatever disagreements we had were minor."',
+                f'{suspect.name} says: "If I wanted them gone, I\'d have said so to their face."',
+                f'{suspect.name} says: "My conscience is clear. I never wished them anything but well."',
             ]
         return rng.choice(options)
 
     if category == "relationship":
-        return f'{suspect.name} says: "My relationship to them was that of a {suspect.relationship_to_victim}."'
+        options = [
+            f'{suspect.name} says: "My relationship to them was that of a {suspect.relationship_to_victim}."',
+            f'{suspect.name} says: "We were {suspect.relationship_to_victim} - that much is known."',
+            f'{suspect.name} says: "I\'d describe it honestly: {suspect.relationship_to_victim}. Nothing more."',
+        ]
+        return rng.choice(options)
 
     if category == "weapon":
         options = [
             f'{suspect.name} says: "I wouldn\'t know the first thing about that."',
             f'{suspect.name} says: "That\'s not something I keep track of."',
+            f'{suspect.name} says: "You think I know my way around a {case.truth.weapon}? Funny."',
+            f'{suspect.name} says: "I couldn\'t even tell you what the evidence room calls it."',
         ]
         return rng.choice(options)
 
@@ -149,20 +171,24 @@ def present_evidence(case, suspect: Suspect, evidence: Evidence) -> str:
         options = [
             f'{suspect.name} stiffens. "That... doesn\'t mean what you think it means."',
             f'{suspect.name} says: "There has to be some mistake in that record."',
+            f'{suspect.name} says: "You\'re reading too much into a slip of paper."',
         ]
     elif mood == "angry":
         options = [
             f'{suspect.name} snaps: "Are you accusing me of something? Choose your words carefully."',
             f'{suspect.name} says sharply: "I don\'t appreciate being cornered like this."',
+            f'{suspect.name} glares: "Careful. Papers can be misdated."',
         ]
     elif mood == "afraid":
         options = [
             f'{suspect.name}\'s hands shake. "I... I can explain. Just give me a moment."',
             f'{suspect.name} says quietly: "This isn\'t what it looks like. Please."',
+            f'{suspect.name} looks away. "You wouldn\'t understand the whole situation."',
         ]
     else:
         options = [
             f'{suspect.name} hesitates. "Alright, maybe I wasn\'t exactly where I said."',
             f'{suspect.name} says: "Fine - I moved around more than I let on. That\'s all."',
+            f'{suspect.name} shifts. "Okay. I wasn\'t entirely precise. Ask me again."',
         ]
     return rng.choice(options)

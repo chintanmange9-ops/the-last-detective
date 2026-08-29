@@ -19,12 +19,28 @@ from game.state import GameState
 from game.engine import Engine
 from storage import save as save_module
 from storage import replay as replay_module
+from tools import solver
 
 
 def _run_new_case(seed: int, record: bool = True) -> Engine:
     case = generate_case(seed)
     state = GameState(seed=seed, current_location=case.truth.location)
     return Engine(case, state, record=record)
+
+
+def _run_solver_test(count: int) -> int:
+    """Developer command: auto-solve `count` cases with the solver bot
+    and report any that the bot fails to solve. Proof of playability."""
+    solved = 0
+    for seed in range(count):
+        case = generate_case(seed)
+        won, _ = solver.solve(case, seed)
+        if won:
+            solved += 1
+        else:
+            print(f"seed {seed}: NOT SOLVED")
+    print(f"\nSolver solved {solved}/{count} cases.")
+    return 0 if solved == count else 1
 
 
 def _run_stress_test(count: int) -> int:
@@ -62,6 +78,8 @@ def build_parser() -> argparse.ArgumentParser:
                          help="Replay a recorded action file against its original seed.")
     parser.add_argument("--stress", type=int, default=None, metavar="N",
                          help="Developer command: generate N cases and report validation failures.")
+    parser.add_argument("--solve", type=int, default=None, metavar="N",
+                         help="Developer command: auto-solve N cases with the solver bot and report failures.")
     return parser
 
 
@@ -71,6 +89,9 @@ def main(argv=None) -> int:
 
     if args.stress is not None:
         return _run_stress_test(args.stress)
+
+    if args.solve is not None:
+        return _run_solver_test(args.solve)
 
     if args.replay:
         seed, actions = replay_module.load_replay(args.replay)

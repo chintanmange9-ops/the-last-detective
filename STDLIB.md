@@ -99,6 +99,16 @@ autocomplete library
 player mistypes one (e.g. `timelime` -> `timeline`), keeping the CLI
 forgiving without adding a dependency.
 
+### 9d. Automated playtesting / solvability proof
+**Normally:** a game-testing or bot framework (e.g. `gymnasium`, a UI
+automation library) or an RL library
+**Instead:** a hand-written deterministic solver (`tools/solver.py`)
+driving the exact same command entry point the human player uses
+**Purpose:** `detective.py --solve N` auto-solves N generated cases with
+nothing but `collections.deque` (BFS pathfinding) and the game's own
+command functions - proving every generated case is solvable without
+adding a testing/bot dependency.
+
 ### 10. HTTP / network access
 **Normally:** `requests`
 **Instead:** not used at all — the game is 100% offline. If a future

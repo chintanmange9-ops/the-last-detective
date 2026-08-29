@@ -17,6 +17,7 @@ class GameState:
     notes: List[str] = field(default_factory=list)
     accusation_attempts: List[str] = field(default_factory=list)
     action_log: List[str] = field(default_factory=list)  # for replay recording
+    hints_used: int = 0
     game_over: bool = False
     won: bool = False
     turn: int = 0

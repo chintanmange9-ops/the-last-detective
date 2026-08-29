@@ -283,6 +283,19 @@ def _build_case(rng: random.Random, seed: int, attempt: int) -> Case:
         discover_condition={"type": "examine_object", "location": motive_location, "object": "appointment calendar"},
     )
 
+    # A phone-record evidence showing the killer and victim arranged to
+    # meet shortly before the murder - corroborates motive/opportunity.
+    meet_time = murder_time - rng.randint(15, 30)
+    new_evidence(
+        "phone_record", "Office",
+        "A call log showing an exchange between the victim and a suspect "
+        "shortly before the murder.",
+        [Fact(subject=killer_name, property="location", value=murder_location,
+              start_time=meet_time, end_time=meet_time,
+              source="evidence:phone_record", reliability=0.9)],
+        discover_condition={"type": "examine_object", "location": "Office", "object": "desk computer"},
+    )
+
     # Red herring: suspicious-looking forensic detail with an innocent explanation.
     if red_herring_name:
         rh_suspect = suspects[red_herring_name]

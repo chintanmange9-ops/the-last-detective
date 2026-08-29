@@ -57,7 +57,7 @@ class Fact:
             when = f" from {format_time(self.start_time)} to {format_time(self.end_time)}"
         elif self.start_time is not None:
             when = f" at {format_time(self.start_time)}"
-        return f"{self.subject} — {self.property}: {self.value}{when}"
+        return f"{self.subject} - {self.property}: {self.value}{when}"
 
 
 @dataclass
