@@ -65,6 +65,7 @@ class Engine:
         print(terminal.dim(f"A body has been found: {self.case.victim_name}, "
                             f"{self.case.victim_role}. Somewhere in this building is the "
                             f"person responsible. Type 'help' to see what you can do."))
+        print(terminal.dim("Start with 'map', then 'inspect <location>' to search rooms."))
 
     def run_interactive(self):
         self.print_intro()

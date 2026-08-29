@@ -83,6 +83,22 @@ from f-string templates chosen deterministically via a per-question
 seeded `random.Random`. No templating engine or external LLM/API call is
 used at runtime.
 
+### 9b. Natural-language command interpretation
+**Normally:** a small NLP library (e.g. `spacy`, `nltk`) or an LLM API
+**Instead:** hand-written regular expressions from the standard `re`
+module
+**Purpose:** `characters/nlu.py` maps free-form player questions ("why?",
+"where were you?") onto the game's interrogation categories with a
+prioritised pattern list. No ML, no NLP framework, no network call.
+
+### 9c. Typo-tolerant command matching
+**Normally:** a fuzzy-matching package (e.g. `fuzzywuzzy`) or an
+autocomplete library
+**Instead:** `difflib.get_close_matches` from the standard library
+**Purpose:** `game/commands.py` suggests the intended command when the
+player mistypes one (e.g. `timelime` -> `timeline`), keeping the CLI
+forgiving without adding a dependency.
+
 ### 10. HTTP / network access
 **Normally:** `requests`
 **Instead:** not used at all — the game is 100% offline. If a future

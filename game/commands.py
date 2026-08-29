@@ -6,23 +6,27 @@ loop and the replay system, so recorded replays exercise exactly the same
 code path as live play.
 """
 
+import difflib
 from typing import Tuple
 
 from evidence import system as evidence_system
-from characters import interrogation
+from characters import interrogation, nlu
 from ui.formatting import bullet_list
 from ui.terminal import bold, yellow, red, green, dim, cyan
 
 
 HELP_TEXT = """Available commands:
   new                     Start a new generated case (only via CLI restart)
-  inspect <location>      Inspect a location
-  examine <target>        Examine collected evidence or an object at your location
+  inspect <location>      Move to a location and search it for evidence
+  examine <target>        Examine evidence or an object where you are
+                          (locations are accepted too - treated like inspect)
   suspects                List suspects
   question <name>         Interrogate a suspect
   present <evidence id>   Present evidence to the suspect you're questioning
   <category>              While questioning: location/timeline/victim/other/
-                          evidence/motive/relationship/weapon
+                          evidence/motive/relationship/weapon.
+                          Natural-language questions also work, e.g.
+                          "where were you?" or "why?".
   done                    Stop questioning the current suspect
   timeline                Review the known (visible) timeline
   evidence                List discovered evidence
@@ -92,7 +96,14 @@ def cmd_examine(case, state, args) -> str:
 
     obj = evidence_system.find_object(case, state.current_location, target)
     if obj is None:
-        return red(f"There's nothing here called '{target}'.")
+        # If the target names a location the player actually knows, treat
+        # "examine <location>" as "inspect <location>" - the behaviour they
+        # clearly expect (move there and search it).
+        target_lower = target.strip().lower()
+        for loc_name in case.location_graph.names():
+            if loc_name.lower() == target_lower:
+                return cmd_inspect(case, state, [loc_name])
+        return _examine_fallback(case, state, target)
 
     lines = [obj.examine_text]
     newly = evidence_system.discover_by_object(case, state.current_location, target)
@@ -248,6 +259,43 @@ def cmd_accuse(case, state, args) -> Tuple[str, bool]:
 CATEGORY_WORDS = {"location", "timeline", "victim", "other", "evidence",
                    "motive", "relationship", "weapon"}
 
+KNOWN_COMMANDS = {
+    "new", "inspect", "examine", "suspects", "question", "present",
+    "done", "timeline", "evidence", "notes", "note", "map", "status",
+    "accuse", "save", "load", "help", "quit", "exit",
+} | CATEGORY_WORDS
+
+
+def _suggest_command(cmd: str) -> str:
+    """Suggest a nearby known command for a misspelled one, if any."""
+    matches = difflib.get_close_matches(cmd, KNOWN_COMMANDS, n=1, cutoff=0.6)
+    if matches:
+        return f"Unknown command '{cmd}'. Did you mean '{matches[0]}'?"
+    return f"Unknown command '{cmd}'. Type 'help' for a list of commands."
+
+
+def _examine_fallback(case, state, target: str) -> str:
+    """Friendly guidance when `examine` matches neither evidence nor an
+    object in the current room."""
+    loc = case.location_graph.get(state.current_location)
+    obj_names = [o.name for o in case.world_objects.get(state.current_location, [])]
+    loc_names = case.location_graph.names()
+    target_lower = target.strip().lower()
+
+    known_location = next((n for n in loc_names if n.lower() == target_lower), None)
+    if known_location is not None:
+        return red(f"{known_location} is a location. Use 'inspect {known_location}' "
+                   f"to move there and search it.")
+
+    if obj_names:
+        return red(f"You can't examine '{target}'. Objects here you can examine: "
+                   f"{', '.join(obj_names)}. To search another room, use: inspect <location>.")
+    if loc is not None and loc.connections:
+        return red(f"You can't examine '{target}'. Try 'inspect' on a connected "
+                   f"room ({', '.join(loc.connections)}) and look around.")
+    return red(f"You can't examine '{target}'. Try 'question <suspect>' or "
+               f"'suspects' to talk to people.")
+
 
 def execute(line: str, case, state) -> Tuple[str, bool]:
     """Execute one command line. Returns (output, should_quit)."""
@@ -296,4 +344,12 @@ def execute(line: str, case, state) -> Tuple[str, bool]:
     if cmd in CATEGORY_WORDS:
         return cmd_category(case, state, cmd), False
 
-    return red(f"Unknown command '{cmd}'. Type 'help' for a list of commands."), False
+    # Natural-language questions work while a suspect is being questioned:
+    # "where were you?" maps straight onto the `location` category.
+    if state.current_suspect:
+        category = nlu.interpret(line)
+        if category is not None:
+            return cmd_category(case, state, category), False
+        return red(nlu.SUGGESTION_LINE), False
+
+    return _suggest_command(cmd), False

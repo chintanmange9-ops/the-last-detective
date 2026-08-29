@@ -28,13 +28,16 @@ in-game for the full command list:
 
 ```
 new                     Start a new generated case (restart the CLI with a new --seed)
-inspect <location>      Inspect a location
-examine <target>        Examine collected evidence or an object at your location
+inspect <location>      Move to a location and search it for evidence
+examine <target>        Examine evidence or an object where you are (a location
+                        name is accepted too and treated like `inspect`)
 suspects                List suspects
 question <name>         Interrogate a suspect
 present <evidence id>   Present evidence to the suspect you're questioning
 <category>              While questioning: location/timeline/victim/other/
                         evidence/motive/relationship/weapon
+                        (natural-language questions also work, e.g. "why?" or
+                        "where were you?")
 done                    Stop questioning the current suspect
 timeline                Review the known (visible) timeline
 evidence                List discovered evidence
@@ -167,5 +170,5 @@ python detective.py --seed 1      # still runs
 ```
 
 The game imports only: `argparse`, `random`, `dataclasses`, `json`,
-`pathlib`, `sys`, `hashlib`, `collections`, `shutil`, `textwrap`,
-`typing`, and `unittest` (tests only) - all standard library.
+`pathlib`, `sys`, `hashlib`, `collections`, `shutil`, `textwrap`, `re`,
+`difflib`, `typing`, and `unittest` (tests only) - all standard library.

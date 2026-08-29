@@ -6,6 +6,7 @@ from pathlib import Path
 from mystery.generator import generate_case
 from game.state import GameState
 from game.engine import Engine
+from game import commands
 from storage.save import save_game, load_game
 from storage.replay import save_replay, load_replay
 
@@ -87,6 +88,52 @@ class TestAccusation(unittest.TestCase):
         engine.process_line(f"accuse {wrong}")
         self.assertFalse(engine.state.won)
         self.assertTrue(engine.state.game_over)
+
+
+class TestTypoSuggestions(unittest.TestCase):
+    def test_known_typo_suggests_timeline(self):
+        case = generate_case(48291)
+        state = GameState(seed=48291, current_location=case.truth.location)
+        output, _ = commands.execute("timelime", case, state)
+        self.assertIn("Did you mean 'timeline'", output)
+
+    def test_unknown_command_plain_message(self):
+        case = generate_case(48291)
+        state = GameState(seed=48291, current_location=case.truth.location)
+        output, _ = commands.execute("frobnicate the widget", case, state)
+        self.assertIn("Unknown command 'frobnicate'", output)
+        self.assertNotIn("Did you mean", output)
+
+
+class TestExamineLocation(unittest.TestCase):
+    def test_examine_connected_location_behaves_like_inspect(self):
+        case = generate_case(48291)
+        start = case.truth.location
+        loc = case.location_graph.get(start)
+        connected = loc.connections[0] if loc else start
+        state = GameState(seed=48291, current_location=start)
+        out_inspect, _ = commands.execute(f"inspect {connected}", case, state)
+        state2 = GameState(seed=48291, current_location=start)
+        out_examine, _ = commands.execute(f"examine {connected}", case, state2)
+        self.assertEqual(state.current_location, connected)
+        self.assertEqual(state2.current_location, connected)
+        self.assertIn("You are now in", out_examine)
+        self.assertIn("You are now in", out_inspect)
+
+    def test_examine_unknown_target_lists_objects(self):
+        case = generate_case(48291)
+        state = GameState(seed=48291, current_location=case.truth.location)
+        start_objs = [o.name for o in case.world_objects.get(state.current_location, [])]
+        output, _ = commands.execute("examine building", case, state)
+        self.assertIn("You can't examine 'building'", output)
+        for obj in start_objs:
+            self.assertIn(obj, output)
+
+    def test_examine_unknown_target_offers_inspect_hint(self):
+        case = generate_case(48291)
+        state = GameState(seed=48291, current_location=case.truth.location)
+        output, _ = commands.execute("examine parking lot", case, state)
+        self.assertIn("inspect", output.lower())
 
 
 if __name__ == "__main__":
