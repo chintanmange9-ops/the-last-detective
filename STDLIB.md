@@ -104,9 +104,10 @@ forgiving without adding a dependency.
 automation library) or an RL library
 **Instead:** a hand-written deterministic solver (`tools/solver.py`)
 driving the exact same command entry point the human player uses
-**Purpose:** `detective.py --solve N` auto-solves N generated cases with
-nothing but `collections.deque` (BFS pathfinding) and the game's own
-command functions - proving every generated case is solvable without
+**Purpose:** `detective.py --solve N` auto-solves N generated cases (or
+`--solve A-B` a chosen seed range, `--solve-seed N` exactly one seed)
+with nothing but `collections.deque` (BFS pathfinding) and the game's
+own command functions - proving every generated case is solvable without
 adding a testing/bot dependency.
 
 ### 10. HTTP / network access

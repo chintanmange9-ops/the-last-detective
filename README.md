@@ -76,6 +76,8 @@ python detective.py --stress 2000      # developer command: generate 2000
 python detective.py --solve 200        # developer command: auto-solve 200 cases
                                         # with the bundled solver bot (proves every
                                         # generated case is actually solvable)
+python detective.py --solve 2000-2200   # ... or just an inclusive seed range
+python detective.py --solve-seed 21321  # ... or a single specific seed
 ```
 
 ## Why it feels different every time
