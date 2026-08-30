@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run tests (73 unittest, stdlib only)
+        run: python -m unittest discover -s tests -v
+      - name: Verify zero third-party deps
+        run: python tools/deps_proof.py
+      - name: Prove every case solvable (sample)
+        run: python detective.py --solve 200
+      - name: Stress generation
+        run: python detective.py --stress 200
