@@ -11,6 +11,8 @@ The Last Detective - entry point.
     python detective.py --solve-seed 21321   (auto-solve exactly one seed)
     python detective.py --solve-seed 21321 --solve-verbose
                                          (same, and print the revealed solution)
+    python detective.py --story 21321      (print a printable case brief:
+                                         a human-solvable whodunit in markdown)
 
 Zero third-party runtime dependencies: standard library only.
 """
@@ -57,6 +59,16 @@ def _run_solver_test(start_seed: int, count: int, label: str = "",
     span = label or f"seeds {start_seed}..{start_seed + count - 1}"
     print(f"\nSolver solved {solved}/{count} cases ({span}).")
     return 0 if solved == count else 1
+
+
+def _run_story(seed: int) -> int:
+    """Developer command: print a printable, human-solvable case brief for
+    one generated case (a whodunit in markdown). The doc doubles as a
+    proof that a case is solvable from the player-visible info alone."""
+    from tools import story
+    case = generate_case(seed)
+    print(story.build_story(case))
+    return 0
 
 
 def _parse_solve_spec(spec: str) -> tuple:
@@ -113,6 +125,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--solve-verbose", action="store_true",
                          help="With --solve/--solve-seed: print the revealed solution "
                          "for every solved case.")
+    parser.add_argument("--story", type=int, default=None, metavar="SEED",
+                         help="Developer command: print a printable, human-solvable "
+                         "case brief (whodunit in markdown) for one seed.")
     return parser
 
 
@@ -132,6 +147,9 @@ def main(argv=None) -> int:
         return _run_solver_test(args.solve_seed, 1,
                                 label=f"single seed {args.solve_seed}",
                                 verbose=args.solve_verbose)
+
+    if args.story is not None:
+        return _run_story(args.story)
 
     if args.replay:
         seed, actions = replay_module.load_replay(args.replay)

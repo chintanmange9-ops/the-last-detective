@@ -1,0 +1,9 @@
+# Zero Dependency hackathon submission metadata.
+# Per the organizers' repository layout (zerodepshack.com). Advisory file.
+
+track = "f"  # F = Open / Wildcard
+
+pitch = "A fully playable, procedurally generated murder-mystery game with a "\
+        "hidden-truth engine, a contradiction engine, and a stdlib-only "\
+        "auto-solver that proves every generated case is solvable - " \
+        "zero third-party dependencies."

@@ -16,13 +16,21 @@ startup options in `detective.py`. `argparse` ships with Python and
 covers everything the CLI needs: typed arguments, defaults, and
 auto-generated `--help` output.
 
-### 2. Terminal formatting and color
-**Normally:** `rich` or `colorama`
-**Instead:** raw ANSI escape sequences + `sys.stdout.isatty()`
-**Purpose:** `ui/terminal.py` prints bold/colored text and a box-drawn
-status panel by writing ANSI codes directly, and disables color entirely
-when output isn't a real terminal (e.g. when piped to a file). No
-external terminal-styling library is required.
+### 2. Terminal formatting and color — *Package Killer: `colorama`
+(≈35M weekly downloads)*
+**Normally:** `colorama` (a chalk-style terminal colorizer), or `rich`
+**Instead:** raw ANSI escape sequences + `sys.stdout.isatty()` +
+`NO_COLOR`
+**Purpose:** `ui/terminal.py` writes bold/colored text and a box-drawn
+status panel directly with ANSI codes, and disables color entirely when
+output isn't a real terminal or when the `NO_COLOR` environment variable
+is set (https://no-color.org). `colorama` exists for exactly this job -
+making ANSI colors "just work" in a terminal - and this project replaces
+it with ~20 lines of hand-written escapes in `ui/terminal.py`. This is
+the organisers' own verified Python cheat-sheet row (`colorama` -> raw
+ANSI escapes), so it doubles as the **+3 Package Killer** claim (a
+chalk-style colorizer people actually install, cleanly reimplemented and
+documented here).
 
 ### 3. Text wrapping and layout
 **Normally:** a UI/templating library
@@ -110,6 +118,15 @@ with nothing but `collections.deque` (BFS pathfinding) and the game's
 own command functions - proving every generated case is solvable without
 adding a testing/bot dependency.
 
+### 9e. Printable case-brief export
+**Normally:** a markdown/document templating layer or document generator
+**Instead:** plain f-string composition of the case model
+(`tools/story.py`, exposed as `detective.py --story SEED`)
+**Purpose:** renders any generated case as a self-contained,
+human-solvable whodunit in markdown (premise, cast with alibis, known
+timeline, evidence catalogue, and a separated solution key) - a printable
+puzzle exported with the string-formatting tools Python ships with.
+
 ### 10. HTTP / network access
 **Normally:** `requests`
 **Instead:** not used at all — the game is 100% offline. If a future
@@ -128,10 +145,23 @@ cases in seconds) that a progress bar isn't needed.
 **Normally:** `colorama` (to make ANSI codes work on legacy Windows
 terminals)
 **Instead:** ANSI codes are only emitted when `sys.stdout.isatty()` is
-true, and modern Windows Terminal / PowerShell already understand ANSI
-natively, so no compatibility shim is required.
+true and the `NO_COLOR` environment variable is unset; modern Windows
+Terminal / PowerShell understand ANSI natively, so no compatibility
+shim is required.
 
-### 13. Verified against the organisers' cheat-sheet
+### 13. Dependency proof scanner
+**Normally:** a dependency auditor (e.g. `pip-audit`, `safety`, a CI
+`pipdeptree` gate)
+**Instead:** a hand-written static scanner (`tools/deps_proof.py`) built
+on `ast` + `sys.stdlib_module_names`
+**Purpose:** `python tools/deps_proof.py > deps-proof.txt` parses every
+`.py` file in the repo, lists each top-level import it finds, and
+verifies the name is either the Python standard library or this project.
+It is the written receipt judges can re-run to confirm the manifest is
+truly empty - no third-party scanner package needed to prove zero
+dependencies.
+
+### 14. Verified against the organisers' cheat-sheet
 The official Zero Dependency cheat-sheet (zerodepshack.com/cheatsheets)
 publishes a per-language "instead of installing it" table, verified
 against the exact runtimes. Entries above that match its Python rows
@@ -145,6 +175,15 @@ verbatim:
 Craft** rubric (30% of the score), and Track F asks that the project
 read as "idiomatic and intentional, not a stunt" - every entry above is
 a substitution the game genuinely makes at runtime, not a placeholder.
+
+This file also claims two bonus categories:
+
+- **STDLIB Log** (+3): fourteen real, non-trivial substitutions listed
+  above (entries 1-9e and 13), each with a one-line rationale.
+- **Package Killer** (+3): `colorama` (a chalk-style terminal colorizer,
+  ~35M weekly downloads) cleanly replaced by hand-written ANSI handling
+  in `ui/terminal.py` (entry 2) - the organisers' own verified Python
+  replacement row.
 
 ---
 

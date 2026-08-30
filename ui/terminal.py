@@ -1,11 +1,13 @@
 """
 Terminal UI (build spec section 18).
 
-Uses only sys, ANSI escape sequences, textwrap, and shutil - no
+Uses only os, sys, ANSI escape sequences, textwrap, and shutil - no
 colorama, no rich. Degrades gracefully: if a terminal doesn't support
-ANSI colors the box-drawing characters and plain text still render fine.
+ANSI colors (or NO_COLOR is set, or stdout isn't a TTY) the plain text
+still renders fine.
 """
 
+import os
 import sys
 from ui.formatting import terminal_width
 
@@ -17,7 +19,9 @@ YELLOW = "\x1b[33m"
 RED = "\x1b[31m"
 GREEN = "\x1b[32m"
 
-_COLOR_ENABLED = sys.stdout.isatty()
+# Colour only when stdout is a real terminal AND NO_COLOR is not set
+# (https://no-color.org, honoured per the hackathon per-track guidance).
+_COLOR_ENABLED = sys.stdout.isatty() and os.environ.get("NO_COLOR") is None
 
 
 def _c(code: str, text: str) -> str:
