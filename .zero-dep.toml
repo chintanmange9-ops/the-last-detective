@@ -3,7 +3,7 @@
 
 track = "f"  # F = Open / Wildcard
 
-pitch = "A fully playable, procedurally generated murder-mystery game with a "\
-        "hidden-truth engine, a contradiction engine, and a stdlib-only "\
-        "auto-solver that proves every generated case is solvable - " \
-        "zero third-party dependencies."
+pitch = "The Last Detective — terminal murder-mystery, procedurally seeded and "\
+        "provably solvable. Play, interrogate, deduce contradictions, or run "\
+        "--story to print a shareable whodunit. 73 tests, zero pip installs — "\
+        "Python stdlib only."
